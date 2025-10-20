@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+  <h1>Student Dashboard</h1>
+  <p>Review your latest quiz and see how close you are to unlocking the next topic.</p>
+</div>
+
+<div class="kpis">
+  <div class="kpi">
+    <div class="value">{{ '%.1f'|format(latest_attempt.score_pct or 0) if latest_attempt else 0 }}%</div>
+    <div class="label">Latest Attempt – Overall</div>
+  </div>
+  <div class="kpi">
+    <div class="value">{{ '%.1f'|format(fund_pct) }}%</div>
+    <div class="label">Latest Attempt – Fundamentals %</div>
+  </div>
+  <div class="kpi">
+    <div class="value">{{ '%.1f'|format(norm_pct) }}%</div>
+    <div class="label">Latest Attempt – Normalization %</div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <div class="card">
+    <div class="head">
+      <h3>Recent Quiz</h3>
+    </div>
+    <div class="body">
+      {% if latest_attempt %}
+        <div class="score-display">
+          <span class="score-value">{{ '%.1f'|format(latest_attempt.score_pct or 0) }}%</span>
+          <span class="score-date">{{ latest_attempt.started_at[:10] if latest_attempt.started_at else '' }}</span>
+        </div>
+        <a href="{{ url_for('quiz') }}" class="btn primary">Retake Quiz</a>
+      {% else %}
+        <p class="muted">Take your first quiz to start tracking mastery.</p>
+        <a href="{{ url_for('quiz') }}" class="btn primary">Start Quiz</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="head">
+      <h3>Progression Status</h3>
+    </div>
+    <div class="body">
+      {% if unlocked_next %}
+        <div class="badge ok">✅ Perfect score in both topics! Next recommendation: <strong>{{ next_topic_name }}</strong></div>
+        <a class="btn primary" href="/thanks" style="margin-top: 16px; display: block; text-align: center;">Proceed to Next Topic</a>
+      {% else %}
+        <div class="badge warn">🔒 Get 100% in both topics (this recent quiz) to proceed.</div>
+        <div style="margin-top: 12px; font-size: 0.9em; color: var(--muted);">
+          <div>Fundamentals: {{ '%.1f'|format(fund_pct) }}%</div>
+          <div>Normalization: {{ '%.1f'|format(norm_pct) }}%</div>
+        </div>
+        {% if latest_attempt %}
+          <p class="muted">Retake the quiz and aim for full marks in each topic.</p>
+        {% else %}
+          <p class="muted">Complete a quiz attempt to unlock the next topic.</p>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h3>Concept Path to Mastery</h3>
+  </div>
+  <div class="body">
+    <p class="muted">Each concept is worth 50 points. You must get 50/50 in both concepts (100/100 total) to unlock the next topic.</p>
+    
+    <div class="mastery-summary">
+      <div class="mastery-line">
+        <div class="mastery-line__header">
+          <h4>Data Modeling & DBMS Fundamentals</h4>
+          <span>{{ '%.1f'|format(fund_pct) }}%</span>
+        </div>
+        <div class="progress-bar">
+          <span style="width: {{ fund_pct }}%"></span>
+        </div>
+      </div>
+
+      <div class="mastery-line">
+        <div class="mastery-line__header">
+          <h4>Normalization & Dependencies</h4>
+          <span>{{ '%.1f'|format(norm_pct) }}%</span>
+        </div>
+        <div class="progress-bar">
+          <span style="width: {{ norm_pct }}%"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mastery-overall">
+      <strong>Overall:</strong> {{ '%.1f'|format(latest_attempt.score_pct or 0) if latest_attempt else 0 }}%
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h3>Learning Modules</h3>
+  </div>
+  <div class="body">
+    <div class="module-links">
+      <a class="btn secondary" href="/module/fundamentals">Data Modeling & DBMS Fundamentals</a>
+      <a class="btn secondary" href="/module/norm">Normalization & Dependencies</a>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h3>Progress Over Time</h3>
+  </div>
+  <div class="body">
+    <canvas id="scoreChart" width="400" height="200"></canvas>
+  </div>
+</div>
+
+<script>
+  const labels = {{ labels|tojson }};
+  const scores = {{ scores|tojson }};
+  const ctx = document.getElementById('scoreChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Score %',
+        data: scores,
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-600'),
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-600').replace(')', ', 0.15)'),
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

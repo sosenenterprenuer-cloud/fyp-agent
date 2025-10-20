@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Personalized Learning Recommendation AI{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="site">
+    <div class="container nav">
+      <a href="{{ url_for('index') }}" class="brand">Personalized Learning Recommendation AI</a>
+      
+      <nav class="nav">
+        {% set dash_href = url_for('index') %}
+        {% set dash_active = '' %}
+        {% if sess_role == 'student' and sess_student_id %}
+          {% set dash_href = url_for('student_dashboard', student_id=sess_student_id) %}
+          {% if request.endpoint == 'student_dashboard' %}
+            {% set dash_active = 'active' %}
+          {% endif %}
+        {% elif sess_role == 'lecturer' %}
+          {% set dash_href = url_for('admin') %}
+          {% if request.endpoint in ['admin', 'admin_analytics', 'admin_rankings', 'admin_students', 'admin_questions'] %}
+            {% set dash_active = 'active' %}
+          {% endif %}
+        {% endif %}
+
+        <a href="{{ dash_href }}" class="{{ dash_active }}">Dashboard</a>
+
+        {% if sess_role == 'student' and sess_student_id %}
+          <a href="{{ url_for('quiz') }}" class="{{ 'active' if request.endpoint == 'quiz' else '' }}">Quiz</a>
+        {% elif sess_role == 'lecturer' %}
+          <a href="{{ url_for('admin') }}" class="{{ 'active' if request.endpoint in ['admin','admin_analytics','admin_rankings','admin_students','admin_questions'] else '' }}">Admin</a>
+        {% endif %}
+
+        {% if sess_role %}
+          <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+        {% else %}
+          <a href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </nav>
+      
+      <div class="nav-right">
+        {% if not sess_role %}
+          <a href="{{ url_for('register') }}" class="btn primary">Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ 'success' if category == 'success' else 'error' if category == 'error' else '' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+</body>
+</html>

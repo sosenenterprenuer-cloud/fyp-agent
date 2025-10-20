@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Admin Home{% endblock %}
+{% block content %}
+<div class="admin-header">
+  <h1>Admin Dashboard</h1>
+  <p class="muted">Overview of system performance and student activity</p>
+</div>
+
+<div class="kpis">
+  <div class="kpi">
+    <div class="value">{{ totals['students_total'] if totals else 0 }}</div>
+    <div class="label">Total Students</div>
+  </div>
+  <div class="kpi">
+    <div class="value">{{ totals['attempts_total'] if totals else 0 }}</div>
+    <div class="label">Total Attempts</div>
+  </div>
+  <div class="kpi">
+    <div class="value">{{ totals['responses_total'] if totals else 0 }}</div>
+    <div class="label">Total Responses</div>
+  </div>
+  <div class="kpi">
+    <div class="value">{{ totals['attempts_with_responses'] if totals else 0 }}</div>
+    <div class="label">Attempts with Responses</div>
+  </div>
+</div>
+
+{% if totals and totals['attempts_total'] > totals['attempts_with_responses'] %}
+  <div class="card">
+    <div class="body">
+      <div class="badge warn">Some attempts have zero answers (e.g., abandoned). That's normal.</div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="card">
+  <div class="head">
+    <h3>Accuracy by Concept</h3>
+  </div>
+  <div class="body">
+    <ul class="concept-breakdown">
+      {% for r in by_cat %}
+        <li><strong>{{ r['cat'] or '—' }}</strong>: {{ r['acc_pct'] or 0 }}% (n={{ r['n_responses'] }})</li>
+      {% else %}
+        <li class="muted">No responses yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h3>Attempts (Last 14 Days)</h3>
+  </div>
+  <div class="body">
+    <canvas id="attemptsChart" height="160"></canvas>
+  </div>
+</div>
+
+<div class="admin-links">
+    <a class="btn primary" href="{{ url_for('admin') }}">Home</a>
+  <a class="btn secondary" href="{{ url_for('admin_analytics') }}">Analytics</a>
+  <a class="btn secondary" href="{{ url_for('admin_rankings') }}">Rankings</a>
+  <a class="btn secondary" href="{{ url_for('admin_students') }}">Students</a>
+  <a class="btn secondary" href="{{ url_for('admin_questions') }}">Questions</a>
+</div>
+
+<script>
+  const labels = {{ labels|tojson }};
+  const countsAll = {{ counts_all|tojson }};
+  const countsResp = {{ counts_resp|tojson }};
+  const ctx = document.getElementById('attemptsChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Attempts',
+          data: countsAll,
+          borderColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-600'),
+          backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-600').replace(')', ', 0.15)'),
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Attempts with Responses',
+          data: countsResp,
+          borderColor: getComputedStyle(document.documentElement).getPropertyValue('--green'),
+          backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--green').replace(')', ', 0.12)'),
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      scales: { y: { beginAtZero: true, precision: 0 } }
+    }
+  });
+</script>
+{% endblock %}

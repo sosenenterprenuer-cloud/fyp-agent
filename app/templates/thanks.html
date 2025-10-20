@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Thanks{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+  <div class="head">
+    <h2>Give a Rating</h2>
+    <p class="muted">Loving the experience? Let's take a moment to appreciate the creator & his AI tools. If not, give one star.</p>
+  </div>
+  <div class="body">
+    <form id="rating-form">
+      <div class="field">
+        <label class="label">Rating</label>
+        <div class="stars">
+          <input type="radio" id="star1" name="rating" value="1">
+          <label for="star1">★</label>
+          <input type="radio" id="star2" name="rating" value="2">
+          <label for="star2">★</label>
+          <input type="radio" id="star3" name="rating" value="3">
+          <label for="star3">★</label>
+          <input type="radio" id="star4" name="rating" value="4">
+          <label for="star4">★</label>
+          <input type="radio" id="star5" name="rating" value="5">
+          <label for="star5">★</label>
+        </div>
+      </div>
+      
+      <div class="field">
+        <label class="label">Comment (Optional)</label>
+        <textarea name="comment" class="textarea" rows="3" placeholder="Share your thoughts about the learning experience..."></textarea>
+      </div>
+      
+      <button type="submit" class="btn primary" style="width: 100%;">Submit Rating</button>
+      <p id="status-msg" class="muted" style="text-align: center; margin-top: 12px;"></p>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('rating-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  const rating = formData.get('rating');
+  const comment = formData.get('comment') || '';
+  const statusMsg = document.getElementById('status-msg');
+  
+  if (!rating) {
+    statusMsg.textContent = 'Please select a rating (1-5 stars).';
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        rating: parseInt(rating),
+        comment: comment
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok && data.ok) {
+      const attemptId = {{ session.get('last_attempt_id', 0) or 0 }};
+      if (attemptId) {
+        window.location = `/review/${attemptId}?feedback=1`;
+      } else {
+        window.location = `/student/{{ session.student_id }}?feedback=1`;
+      }
+    } else {
+      statusMsg.textContent = data.error || 'Failed to submit feedback. Please try again.';
+    }
+  } catch (error) {
+    statusMsg.textContent = 'Unable to submit feedback right now. Please try again later.';
+  }
+});
+</script>
+{% endblock %}

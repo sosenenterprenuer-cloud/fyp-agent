@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}Quiz{% endblock %}
+{% block content %}
+<div class="quiz-header">
+  <h1>Database Normalization Quiz</h1>
+  <p class="muted">30 questions • answers autosaved before submit</p>
+</div>
+
+<div class="quiz-progress">
+  <div class="progress">
+    <span id="progress-bar" style="width: 0%"></span>
+  </div>
+  <p id="progress-text" class="muted">Question 0 of 30</p>
+</div>
+
+<div id="quiz-root">
+  <div class="quiz-loading">
+    <h2>Loading Quiz...</h2>
+    <p>Preparing your quiz questions...</p>
+  </div>
+</div>
+
+<div class="quiz-actions" id="quiz-actions" style="display: none;">
+  <button id="back-btn" class="btn secondary" disabled>Back</button>
+  <button id="next-btn" class="btn secondary" disabled>Next</button>
+  <button id="submit-btn" class="btn primary" disabled>Submit Quiz</button>
+</div>
+
+<script>
+let currentQuestion = 0;
+let questions = [];
+let answers = {};
+let attemptId = null;
+
+// Load quiz questions
+async function loadQuiz() {
+  try {
+    const response = await fetch(`/api/quiz_progressive?attempt_id={{ attempt_id }}`);
+    const data = await response.json();
+    
+    // Handle new API format
+    if (data.questions && data.attempt_id) {
+      questions = data.questions;
+      attemptId = data.attempt_id;
+    } else {
+      // Fallback to old format
+      questions = data;
+      const attemptResponse = await fetch('/reattempt', { method: 'POST' });
+      const attemptData = await attemptResponse.json();
+      attemptId = attemptData.attempt_id || 1;
+    }
+    
+    showQuestion(0);
+    document.getElementById('quiz-actions').style.display = 'flex';
+  } catch (error) {
+    console.error('Error loading quiz:', error);
+    document.getElementById('quiz-root').innerHTML = '<div class="card"><div class="body"><h3>Error loading quiz</h3><p>Please try again later.</p></div></div>';
+  }
+}
+
+function showQuestion(index) {
+  if (index < 0 || index >= questions.length) return;
+  
+  currentQuestion = index;
+  const question = questions[index];
+  
+  const quizHTML = `
+    <div class="card">
+      <div class="head">
+        <h3>Question ${index + 1} of ${questions.length}</h3>
+        <span class="badge">${question.two_category || 'General'}</span>
+      </div>
+      <div class="body">
+        <p class="question-text">${question.question}</p>
+        <div class="question-options">
+          ${question.options ? question.options.map((option, i) => {
+            const letter = String.fromCharCode(65 + i); // A, B, C, D
+            return `
+              <label class="option">
+                <input type="radio" name="q${question.quiz_id}" value="${option}" ${answers[question.quiz_id] === option ? 'checked' : ''}>
+                <span>${letter}) ${option}</span>
+              </label>
+            `;
+          }).join('') : ''}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('quiz-root').innerHTML = quizHTML;
+  updateProgress();
+  updateButtons();
+  
+  // Add event listeners
+  document.querySelectorAll(`input[name="q${question.quiz_id}"]`).forEach(input => {
+    input.addEventListener('change', function() {
+      answers[question.quiz_id] = this.value;
+      updateButtons();
+    });
+  });
+}
+
+function updateProgress() {
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  document.getElementById('progress-bar').style.width = progress + '%';
+  document.getElementById('progress-text').textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+}
+
+function updateButtons() {
+  const backBtn = document.getElementById('back-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const submitBtn = document.getElementById('submit-btn');
+  
+  backBtn.disabled = currentQuestion === 0;
+  nextBtn.disabled = currentQuestion === questions.length - 1;
+  
+  const currentQuestionId = questions[currentQuestion].quiz_id;
+  const hasAnswer = answers[currentQuestionId];
+  
+  if (currentQuestion === questions.length - 1) {
+    nextBtn.style.display = 'none';
+    submitBtn.style.display = 'inline-flex';
+    submitBtn.disabled = !hasAnswer;
+  } else {
+    nextBtn.style.display = 'inline-flex';
+    submitBtn.style.display = 'none';
+  }
+}
+
+// Event listeners
+document.getElementById('back-btn').addEventListener('click', () => {
+  if (currentQuestion > 0) showQuestion(currentQuestion - 1);
+});
+
+document.getElementById('next-btn').addEventListener('click', () => {
+  if (currentQuestion < questions.length - 1) showQuestion(currentQuestion + 1);
+});
+
+document.getElementById('submit-btn').addEventListener('click', async () => {
+  if (Object.keys(answers).length === 0) {
+    alert('Please answer at least one question before submitting.');
+    return;
+  }
+  
+  try {
+    // Convert answers to the new format
+    const answerArray = Object.entries(answers).map(([quizId, chosenText]) => ({
+      quiz_id: parseInt(quizId.replace('q', '')),
+      chosen_text: chosenText,
+      time_sec: 15.0
+    }));
+    
+    const response = await fetch('/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        attempt_id: attemptId,
+        answers: answerArray
+      })
+    });
+    
+    const result = await response.json();
+    if (result.ok) {
+      window.location.href = result.redirect_url;
+    } else {
+      alert('Error submitting quiz: ' + (result.error || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Error submitting quiz:', error);
+    alert('Error submitting quiz. Please try again.');
+  }
+});
+
+// Load quiz when page loads
+loadQuiz();
+</script>
+{% endblock %}

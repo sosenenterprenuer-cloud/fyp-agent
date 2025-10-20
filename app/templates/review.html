@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Review Attempt #{{ attempt['attempt_id'] }}{% endblock %}
+{% block content %}
+
+<div class="review-hero">
+  <div class="score-display">{{ attempt['items_correct'] }}/{{ attempt['items_total'] }}</div>
+  
+  <div class="score-breakdown">
+    <div class="score-chip">Fundamentals: {{ fund_pct }}%</div>
+    <div class="score-chip">Normalization: {{ norm_pct }}%</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h3>Quiz Results</h3>
+  </div>
+  <div class="body">
+    {% if unlocked_next %}
+      <div class="badge ok">✅ Perfect in both topics! Next recommendation: <strong>{{ next_topic_name }}</strong></div>
+      <p style="margin-top: 16px;"><a class="btn primary" href="/thanks">Give a rating</a></p>
+    {% else %}
+      <div class="badge warn">🔒 Get 100% in both topics to proceed to next recommendation</div>
+    {% endif %}
+    {% if request.args.get('feedback') %}
+      <div class="badge ok" style="margin-top: 12px;">⭐ Feedback has been submitted. Thank you!</div>
+    {% endif %}
+  </div>
+</div>
+
+<h3 class="section-title">Question Review</h3>
+<div class="question-review">
+  {% for it in items %}
+    <div class="card">
+      <div class="head">
+        <strong>Q{{ it['quiz_id'] }}</strong> · <em>{{ it['two_category'] or '—' }}</em>
+      </div>
+      <div class="body">
+        <p class="question-text">{{ it['question'] }}</p>
+        <div class="answer-feedback">
+          <div class="answer-row">
+            <div class="answer-label">Your answer:</div>
+            <div class="answer-value {{ 'correct' if it['score'] else 'incorrect' }}">
+              <strong>{{ it['answer_text'] or '(blank)' }}</strong>
+            </div>
+          </div>
+          <div class="answer-row">
+            <div class="answer-label">Correct answer:</div>
+            <div class="answer-value correct">
+              <strong>{{ it['correct_text'] }}</strong>
+            </div>
+          </div>
+          {% if it['explanation'] %}
+            <details style="margin-top: 12px;">
+              <summary style="cursor: pointer; color: var(--muted); font-size: 0.9em;">► Why?</summary>
+              <p style="margin-top: 8px; color: var(--muted); font-size: 0.9em;">{{ it['explanation'] }}</p>
+            </details>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<p style="text-align: center; margin-top: 32px;">
+  <a class="btn secondary" href="/student/{{ session.student_id }}">Back to Dashboard</a>
+</p>
+{% endblock %}

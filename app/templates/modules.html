@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Learning Modules{% endblock %}
+{% block content %}
+<div class="modules-header">
+  <h1>Focus on the Two Core Concepts</h1>
+  <p>Deepen your understanding of data modeling foundations and normalization techniques before moving on to advanced topics.</p>
+</div>
+
+<div class="modules-grid">
+  {% for module in modules %}
+  <div class="module-card">
+    <div class="module-header">
+      <h3>{{ module.title }}</h3>
+      <span class="nf-level">Core Concept</span>
+    </div>
+    <p class="module-description">{{ module.description }}</p>
+    <div class="module-actions">
+      <a href="{{ module.resource_url }}" class="btn">Start Learning</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="modules-footer">
+  <p>Master both modules to unlock the next topic.</p>
+  {% if sess_role == 'student' and sess_student_id %}
+    <a href="{{ url_for('student_dashboard', student_id=sess_student_id) }}" class="btn btn-outline">Back to Dashboard</a>
+  {% endif %}
+</div>
+{% endblock %}

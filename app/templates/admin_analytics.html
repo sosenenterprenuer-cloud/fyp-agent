@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="admin-header">
+  <h1>Analytics</h1>
+  <p class="muted">Detailed performance metrics and timing analysis</p>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h3>Per-student Question Timing</h3>
+  </div>
+  <div class="body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Email</th>
+          <th>QID</th>
+          <th>Question</th>
+          <th>Avg Time (s)</th>
+          <th>n</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in per_student_qtime %}
+          <tr>
+            <td>{{ r['student'] }}</td>
+            <td>{{ r['email'] }}</td>
+            <td>{{ r['quiz_id'] }}</td>
+            <td style="max-width:600px">{{ r['question'] }}</td>
+            <td>{{ r['avg_time_s'] }}</td>
+            <td>{{ r['n'] }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="muted">No responses yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h3>Question Time Summary (Global)</h3>
+  </div>
+  <div class="body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>QID</th>
+          <th>Question</th>
+          <th>Avg</th>
+          <th>Min</th>
+          <th>Max</th>
+          <th>n</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in qtime_summary %}
+          <tr>
+            <td>{{ r['quiz_id'] }}</td>
+            <td style="max-width:600px">{{ r['question'] }}</td>
+            <td>{{ r['avg_time_s'] }}</td>
+            <td>{{ r['min_time_s'] }}</td>
+            <td>{{ r['max_time_s'] }}</td>
+            <td>{{ r['n'] }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="muted">No responses yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <div class="card">
+    <div class="head">
+      <h3>Slowest Questions</h3>
+    </div>
+    <div class="body">
+      <ol>
+        {% for r in slowest %}
+          <li>Q{{ r['quiz_id'] }} — {{ r['avg_time_s'] }}s (n={{ r['n'] }})</li>
+        {% else %}
+          <li class="muted">Not enough data.</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="head">
+      <h3>Fastest Questions</h3>
+    </div>
+    <div class="body">
+      <ol>
+        {% for r in fastest %}
+          <li>Q{{ r['quiz_id'] }} — {{ r['avg_time_s'] }}s (n={{ r['n'] }})</li>
+        {% else %}
+          <li class="muted">Not enough data.</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="admin-links">
+  <a class="btn secondary" href="{{ url_for('admin_overview') }}">← Back to Overview</a>
+</div>
+{% endblock %}

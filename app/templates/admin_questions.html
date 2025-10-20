@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Questions{% endblock %}
+{% block content %}
+<div class="admin-header">
+  <h1>Question Bank Performance</h1>
+  <p class="muted">Track how each question performs across all attempts</p>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h3>Question Performance Metrics</h3>
+  </div>
+  <div class="body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Concept</th>
+          <th>Question</th>
+          <th>Correct %</th>
+          <th>Responses</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in qs %}
+          <tr>
+            <td>{{ q['quiz_id'] }}</td>
+            <td>{{ q['two_category'] or '—' }}</td>
+            <td class="question-text">{{ q['question'] }}</td>
+            <td>
+              <span class="badge {{ 'ok' if (q['correct_rate'] or 0) >= 70 else 'warn' if (q['correct_rate'] or 0) >= 50 else 'err' }}">
+                {{ q['correct_rate'] or 0 }}%
+              </span>
+            </td>
+            <td>{{ q['n'] }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="muted">No questions available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="admin-links">
+  <a class="btn secondary" href="{{ url_for('admin_overview') }}">← Back to Overview</a>
+</div>
+{% endblock %}

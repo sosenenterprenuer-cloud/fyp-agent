@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Rankings{% endblock %}
+{% block content %}
+<div class="admin-header">
+  <h1>Student Rankings</h1>
+  <p class="muted">Performance rankings and leaderboard</p>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h3>Student Performance Rankings</h3>
+  </div>
+  <div class="body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Student</th>
+          <th>Email</th>
+          <th>Best Score</th>
+          <th>Attempts</th>
+          <th>Last Attempt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in rows %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ student.name }}</td>
+            <td>{{ student.email }}</td>
+            <td>{{ '%.1f'|format(student.best_score) }}%</td>
+            <td>{{ student.attempts }}</td>
+            <td>{{ student.last_score }}%</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="muted">No students found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="admin-links">
+  <a class="btn secondary" href="{{ url_for('admin_overview') }}">← Back to Overview</a>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'auth_base.html' %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="head">
+    <h2>Welcome Back</h2>
+    <p class="muted">Sign in to your account to continue learning</p>
+  </div>
+  <div class="body">
+    <form method="POST" action="{{ url_for('login') }}">
+      <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+      <div class="field">
+        <label class="label">Email</label>
+        <input type="email" name="email" class="input" required>
+      </div>
+      <div class="field">
+        <label class="label">Password</label>
+        <input type="password" name="password" class="input" required>
+      </div>
+      <button class="btn primary" type="submit" style="width: 100%;">Login</button>
+    </form>
+    <p style="text-align: center; margin-top: 16px;">
+      <a href="{{ url_for('register') }}" class="btn ghost">Create Account</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
