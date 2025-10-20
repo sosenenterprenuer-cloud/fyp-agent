@@ -1,2 +1,2 @@
-# fyp-agent
-Using ChatGPT agent to develop FYP
+# fyp-agent- 20-10
+Restart build wirh ChatGPT research
